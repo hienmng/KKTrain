@@ -1,11 +1,6 @@
-root
-uproot
-awkward
-numpy
-matplotlib
 tensorflow
+uproot
+matplotlib
 scikit-learn
 xgboost
 ipykernel
-pyyaml
-h5py
