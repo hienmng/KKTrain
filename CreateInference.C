@@ -16,10 +16,12 @@ using namespace TMVA::Experimental;
 void CreateInference(const char* bname,const char* suffix=""){
   string modelname = string("models/") + string(bname)+ string(suffix) + string(".h5");
   string codename = string("code/") + string(bname) + string(".hxx");
+  cout << "Parsing file " << modelname << endl;
   //Parsing the saved Keras .h5 file into RModel object
   SOFIE::RModel model = SOFIE::PyKeras::Parse(modelname);
 
   //Generating inference code
   model.Generate();
+  cout << "Saving file " << codename << endl;
   model.OutputGenerated(codename);
 }
