@@ -14,8 +14,8 @@ using namespace TMVA::Experimental;
 // suffix = suffix on base name
 // code will be put in the code directory using just the base name
 void CreateInference(const char* bname,const char* suffix=""){
-  string modelname = string("models/") + string(bname)+ string(suffix) + string(".h5");
-  string codename = string("code/") + string(bname) + string(".hxx");
+  string modelname = string(bname) + string(".h5");
+  string codename = string("code/") + string(bname) + string(suffix) + string(".hxx");
   cout << "Parsing file " << modelname << endl;
   //Parsing the saved Keras .h5 file into RModel object
   SOFIE::RModel model = SOFIE::PyKeras::Parse(modelname);
