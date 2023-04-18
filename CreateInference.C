@@ -10,13 +10,16 @@
 
 using namespace TMVA::Experimental;
 
-void CreateInference(const char* kname,const char* suffix=""){
-    string modelname = string(kname) + string(".h5");
-    string infername = string(kname) +string(suffix) + string(".hxx");
-    //Parsing the saved Keras .h5 file into RModel object
-    SOFIE::RModel model = SOFIE::PyKeras::Parse(modelname);
+// bname = base name of hdf5 model file name created by keras.save()
+// suffix = suffix on base name
+// code will be put in the code directory using just the base name
+void CreateInference(const char* bname,const char* suffix=""){
+  string modelname = string("models/") + string(bname)+ string(suffix) + string(".h5");
+  string codename = string("code/") + string(bname) + string(".hxx");
+  //Parsing the saved Keras .h5 file into RModel object
+  SOFIE::RModel model = SOFIE::PyKeras::Parse(modelname);
 
-    //Generating inference code
-    model.Generate();
-    model.OutputGenerated(infername);
+  //Generating inference code
+  model.Generate();
+  model.OutputGenerated(codename);
 }
