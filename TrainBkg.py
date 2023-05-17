@@ -23,6 +23,7 @@ print("Loaded TrainBkg")
 
 
 import os
+import ROOT
 if not os.path.isfile(file_list):
     raise SystemExit("File list " +file_list + " doesn't exist! Exiting")
 import uproot 
@@ -47,7 +48,7 @@ from xgboost import XGBClassifier
 # In[ ]:
 
 
-rm -rf ./logs/
+# rm -rf ./logs/
 
 
 # In our problem we have a different number of signal and background entries in our input dataset. There are several techniques avaialable for _unbalanced_ datasets. Here we are using the most naive one, which is just using $\min(N_{sig}, N_{bkg})$ events. Then, we divide our input into the _training_, _validation_, and _test_ datasets.  Note that the datasets must be pruned to the nearest multiple of the batch size, otherwise the gradient calculation fails.
@@ -195,56 +196,61 @@ for i in range(bkg_dataset.shape[0]):
 
 # In[ ]:
 
-
-plt.hist(udoca_sig,label="Unbiased DOCA Signal", bins=100,range=(0,15))
-plt.hist(udoca_back,label="Unbiased DOCA Background", histtype='step', bins=100,range=(0,15))
+label1 = "Unbiased DOCA Signal"
+plt.hist(udoca_sig, label = label1, bins=100, range=(0,15))
+plt.hist(udoca_back,label= label1, histtype='step', bins=50, range=(-3.0,5.0))
 plt.legend()
-plt.show
+plt.savefig("plots/"+ suffix + label1 + ".pdf")
+plt.clf()
 
 
 # In[ ]:
 
-
-plt.hist(cdrift_sig,label="Drift Radius Signal", bins=50,range=(-3.0,5.0))
-plt.hist(cdrift_back,label="Drift Radius Background", histtype='step', bins=50, range=(-3.0,5.0))
+label2 = "Drift Radius Signal"
+plt.hist(cdrift_sig,label = label2, bins=50,range=(-3.0,5.0))
+plt.hist(cdrift_back,label = label2, histtype='step', bins=50,range=(-3.0,5.0))
 plt.legend()
-plt.show
+plt.savefig("plots/"+ suffix + label2 + ".pdf")
+plt.clf()
 
 
 # In[ ]:
 
-
-plt.hist(udocasig_sig,label="DOCA Variance Signal", bins=50,range=(0,5))
-plt.hist(udocasig_back,label="DOCA Variance Background", histtype='step', bins=50,range=(0,5))
+label3 = "DOCA Variance Signal"
+plt.hist(udocasig_sig, label = label3, bins=50,range=(0,5))
+plt.hist(udocasig_back, label = label3, histtype='step', bins=50,range=(0,5))
 plt.legend()
-plt.show
+plt.savefig("plots/"+ suffix + label3 + ".pdf") 
+plt.clf()
 
 
 # In[ ]:
 
-
-plt.hist(tottdrift_sig,label="Time-Over-Threshold Drift Time Signal", bins=50, range=(0,40))
-plt.hist(tottdrift_back,label="Time-Over-Threshold Drift Time Background", histtype='step', bins=50,range=(0,40))
+label4 = "Time-Over-Threshold Drift Time Signal"
+plt.hist(tottdrift_sig,label = label4, bins=50, range=(0,40))
+plt.hist(tottdrift_back,label = label4, histtype='step', bins=50, range=(0,40))
 plt.legend()
-plt.show
+plt.savefig("plots/" + suffix + label4 + ".pdf")
+plt.clf()
+
+# In[ ]:
+
+label5 = "WDist - Unbiased U Position Difference Signal"
+plt.hist(du_sig,label = label5, bins=50, range=(0,800))
+plt.hist(du_back,label = label5, histtype='step', bins=50, range=(0,800))
+plt.legend()
+plt.savefig("plots/" + suffix + label5 + ".pdf")
+plt.clf()
 
 
 # In[ ]:
 
-
-plt.hist(du_sig,label="WDist - Unbiased U Position Difference Signal", bins=50, range=(0,800))
-plt.hist(du_back,label="WDist - Unbiased U Position Difference Background", histtype='step', bins=50, range=(0,800))
+label6 = "Rho Signal"
+plt.hist(rho_sig, label = label6, bins=50, range=(350,700))
+plt.hist(rho_back, label = label6, histtype='step', bins=50, range=(350,700))
 plt.legend()
-plt.show
-
-
-# In[ ]:
-
-
-plt.hist(rho_sig,label="Rho Signal", bins=50, range=(350,700))
-plt.hist(rho_back,label="Rho Background", histtype='step', bins=50, range=(350,700))
-plt.legend()
-plt.show
+plt.savefig("plots/" + suffix + label6 + ".pdf")
+plt.clf()
 
 
 # Then, we concatenate each hit variables into a single, large numpy array. These arrays are then stacked in a single bi-dimensional array with `np.vstack`, which will be our input dataset used for the training of the machine learning algorithms.
@@ -297,10 +303,11 @@ history = model.fit(x_ce_train, y_ce_train,
 plt.plot(history.history['val_loss'],label="val loss")
 plt.plot(history.history['loss'],label="loss")
 plt.legend()
+plt.savefig("training_plots/"+ suffix + "Validation_Loss_Plot.pdf")
 
-get_ipython().run_line_magic('load_ext', 'tensorboard')
-#rm -rf ./logs/
-get_ipython().run_line_magic('tensorboard', '--logdir logs/fit')
+# get_ipython().run_line_magic('load_ext', 'tensorboard')
+# #rm -rf ./logs/
+# get_ipython().run_line_magic('tensorboard', '--logdir logs/fit')
 
 
 # ## Create and train a Boosted Decision Tree
@@ -351,12 +358,22 @@ ax.set_ylim(0.8,1.05)
 fig.savefig("plots/TrainBkg" + suffix + ".pdf")
 
 
+
 # Now we save our model in HDF5 format.  This can be used as input to the SOFIE parser.  Note that the kernel must be restarted when saving this file, as re-running individual cells increments the layer numbers in the hdf5 file, causing the SOFIE parser to fail.  This causes the spurious tensorflow warning about the model not having been built.
 
-# In[ ]:
+# In[21]:
 
 
-model.save(modelfile)
-print("model saved to " +modelfile)
+
 model.summary()
+model.save("models/TrainBkg" + suffix + ".h5")
 
+
+
+# Now we save our model in HDF5 format.  This can be used as input to the SOFIE parser.  Note that the kernel must be restarted when saving this file, as re-running individual cells increments the layer numbers in the hdf5 file, causing the SOFIE parser to fail.  This causes the spurious tensorflow warning about the model not having been built.
+modelFile = "models/TrainBkg" + suffix + ".h5"
+codename = "code/TrainBkg" + suffix + ".hxx";
+output_model = ROOT.TMVA.Experimental.SOFIE.PyKeras.Parse(modelFile)
+output_model.Generate()
+output_model.OutputGenerated(codename)
+# output_model.save("code/TrainBkg"+suffix+".hxx")
