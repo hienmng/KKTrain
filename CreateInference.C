@@ -11,8 +11,8 @@
 using namespace TMVA::Experimental;
 
 void CreateInference(const char* kname,const char* suffix=""){
-    string modelname = string(kname) + string(".h5");
-    string infername = string(kname) +string(suffix) + string(".hxx");
+    string modelname = string("model/") + string(kname) + string(".h5");
+    string infername = string("code/") + string(kname) +string(suffix) + string(".hxx");
     //Parsing the saved Keras .h5 file into RModel object
     SOFIE::RModel model = SOFIE::PyKeras::Parse(modelname);
 
