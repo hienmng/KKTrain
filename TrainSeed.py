@@ -9,10 +9,11 @@
 
 
 suffix = "Seed"
-treename = "TAKK"
-#file_list = "/global/cfs/cdirs/m3712/Mu2e/TrkAna/43291981/files.txt"
-file_list = "/Users/brownd/data/43291981/files.txt"
+treename = ["TAKK"]
+file_list = "/global/cfs/cdirs/m3712/Mu2e/TrkAna/43291981/files.txt"
+#file_list = "/Users/brownd/data/43291981/files.txt"
 print("Using files in " + file_list)
 
-get_ipython().run_line_magic('run', './TrainBkg.ipynb')
+with open("TrainBkg.py") as f:
+    exec(f.read())
 

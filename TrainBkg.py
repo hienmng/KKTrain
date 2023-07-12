@@ -68,47 +68,48 @@ for filename in files:
     # print(pathToFile)
     # file = uproot.open(pathToFile)
     with uproot.open(filename) as file:
-        trkana = file[treename]["trkana"].arrays(filter_name="/de|detsh|detshmc|demc/i")
-        trkana = trkana[(trkana['de.goodfit']==1)&(trkana['de.status']>0)&(trkana['demc.proc']==167)]
-        hstate = ak.concatenate(trkana['detsh.state']).to_numpy()
-        udoca = ak.concatenate(trkana['detsh.udoca']).to_numpy()
-        udoca = np.absolute(udoca)
-        cdrift = ak.concatenate(trkana['detsh.cdrift']).to_numpy()
-        rdrift = ak.concatenate(trkana['detsh.rdrift']).to_numpy()
-        tottdrift = ak.concatenate(trkana['detsh.tottdrift']).to_numpy()
-        sint = ak.concatenate(trkana['detsh.wdot']).to_numpy()
-        sint = np.sqrt(1.0-sint*sint)
-        plen = 6.25-rdrift*rdrift
-        pmin = np.repeat(0.25,plen.shape[0])
-        plen = np.sqrt(np.maximum(plen,pmin))
-        udocasig = ak.concatenate(trkana['detsh.udocavar']).to_numpy()
-        udocasig = np.sqrt(udocasig)
-        wdist = ak.concatenate(trkana['detsh.wdist']).to_numpy()
-        uupos = ak.concatenate(trkana['detsh.uupos']).to_numpy()
-        du = wdist-uupos
-        du = np.absolute(du)
-        rho = np.square(ak.concatenate(trkana['detsh.poca.fCoordinates.fX']).to_numpy())
-        rho = np.add(rho,np.square(ak.concatenate(trkana['detsh.poca.fCoordinates.fY']).to_numpy()))
-        rho = np.sqrt(rho)
-        print("Processed file " + filename + " with %s hits"%hstate.shape[0])
-        temp = np.vstack((udoca, cdrift, udocasig, tottdrift, du, rho)).T
-        if input_dataset is np.empty:
-            input_dataset = temp
-        else:
-            input_dataset = np.concatenate((input_dataset, temp))
-        mcrel = []
-        for i, this_dt in enumerate(trkana['detsh.state']):
-            mcrel.extend(trkana['detshmc.rel._rel'][i][:len(this_dt)])
-        mcrel = np.array(mcrel)
-        rand = np.random.random_sample([mcrel.shape[0]])
-        sig = (hstate>=-2) & (rand<0.05) & (mcrel==0) & (udoca < 50.0) & (du < 3000.0)
-        bkg = (hstate>=-2) & (mcrel==-1) & (udoca < 50.0) & ( du < 3000.0)
-        if signal is np.empty:
-            signal = sig
-            backgnd = bkg
-        else:
-            signal = np.concatenate((signal,sig))
-            backgnd = np.concatenate((backgnd,bkg))
+        for tree in treename:
+            trkana = file[tree]    ["trkana"].arrays(filter_name="/de|detsh|detshmc|demc/i") ##treename needs to be treenames[i
+            trkana = trkana[(trkana['de.goodfit']==1)&(trkana['de.status']>0)&(trkana['demc.proc']==167)]
+            hstate = ak.concatenate(trkana['detsh.state']).to_numpy()
+            udoca = ak.concatenate(trkana['detsh.udoca']).to_numpy()
+            udoca = np.absolute(udoca)
+            cdrift = ak.concatenate(trkana['detsh.cdrift']).to_numpy()
+            rdrift = ak.concatenate(trkana['detsh.rdrift']).to_numpy()
+            tottdrift = ak.concatenate(trkana['detsh.tottdrift']).to_numpy()
+            sint = ak.concatenate(trkana['detsh.wdot']).to_numpy()
+            sint = np.sqrt(1.0-sint*sint)
+            plen = 6.25-rdrift*rdrift
+            pmin = np.repeat(0.25,plen.shape[0])
+            plen = np.sqrt(np.maximum(plen,pmin))
+            udocasig = ak.concatenate(trkana['detsh.udocavar']).to_numpy()
+            udocasig = np.sqrt(udocasig)
+            wdist = ak.concatenate(trkana['detsh.wdist']).to_numpy()
+            uupos = ak.concatenate(trkana['detsh.uupos']).to_numpy()
+            du = wdist-uupos
+            du = np.absolute(du)
+            rho = np.square(ak.concatenate(trkana['detsh.poca.fCoordinates.fX']).to_numpy())
+            rho = np.add(rho,np.square(ak.concatenate(trkana['detsh.poca.fCoordinates.fY']).to_numpy()))
+            rho = np.sqrt(rho)
+            print("Processed file " + filename + " with %s hits"%hstate.shape[0])
+            temp = np.vstack((udoca, cdrift, udocasig, tottdrift, du, rho)).T
+            if input_dataset is np.empty:
+                input_dataset = temp
+            else:
+                input_dataset = np.concatenate((input_dataset, temp))
+            mcrel = []
+            for i, this_dt in enumerate(trkana['detsh.state']):
+                mcrel.extend(trkana['detshmc.rel._rel'][i][:len(this_dt)])
+            mcrel = np.array(mcrel)
+            rand = np.random.random_sample([mcrel.shape[0]])
+            sig = (hstate>=-2) & (rand<0.05) & (mcrel==0) & (udoca < 50.0) & (du < 3000.0)
+            bkg = (hstate>=-2) & (mcrel==-1) & (udoca < 50.0) & ( du < 3000.0)
+            if signal is np.empty:
+                signal = sig
+                backgnd = bkg
+            else:
+                signal = np.concatenate((signal,sig))
+                backgnd = np.concatenate((backgnd,bkg))
 nhits=len(input_dataset)
 nsignal=signal.sum()
 nbackgnd=backgnd.sum()
@@ -119,6 +120,8 @@ print("Total dataset %s hits, %s signal and %s background"%(nhits,nsignal,nbackg
 
 
 min_len = min(len(input_dataset[signal]), len(input_dataset[backgnd]))
+print("Number of events we train on for %s dataset after rebalancing is %s"%(suffix,min_len))
+############################################PROBELM##########################################
 bsize=32
 # I need to double the batch_size when truncating as we divide the sample in half later for training
 tsize=2*bsize
@@ -196,60 +199,80 @@ for i in range(bkg_dataset.shape[0]):
 
 # In[ ]:
 
-label1 = "Unbiased DOCA Signal"
-plt.hist(udoca_sig, label = label1, bins=100, range=(0,15))
-plt.hist(udoca_back,label= label1, histtype='step', bins=50, range=(-3.0,5.0))
+
+
+label1 = "Unbiased DOCA"
+# label1b = "Unbiased DOCA Background"
+plt.hist(udoca_sig, label = "Unbiased DOCA Signal", bins=100, range=(0,15))
+plt.hist(udoca_back,label= "Unbiased DOCA Background", histtype='step', bins=50, range=(-3.0,5.0))
+plt.xlabel("mm")
+plt.ylabel("Number of Hits")
 plt.legend()
-plt.savefig("plots/"+ suffix + label1 + ".pdf")
+plt.savefig("plots/"+ "TrainBkg" + suffix + label1 + ".pdf")
 plt.clf()
 
 
 # In[ ]:
 
-label2 = "Drift Radius Signal"
-plt.hist(cdrift_sig,label = label2, bins=50,range=(-3.0,5.0))
-plt.hist(cdrift_back,label = label2, histtype='step', bins=50,range=(-3.0,5.0))
+label2 = "Drift Radius"
+# label2b = "Drift Radius Background"
+plt.hist(cdrift_sig,label = "Drift Radius Signal", bins=50,range=(-3.0,5.0))
+plt.hist(cdrift_back,label = "Drift Radius Background", histtype='step', bins=50,range=(-3.0,5.0))
+plt.xlabel("mm")
+plt.ylabel("Number of Hits")
 plt.legend()
-plt.savefig("plots/"+ suffix + label2 + ".pdf")
+plt.savefig("plots/"+ "TrainBkg" + suffix + label2 + ".pdf")
 plt.clf()
 
 
 # In[ ]:
 
-label3 = "DOCA Variance Signal"
-plt.hist(udocasig_sig, label = label3, bins=50,range=(0,5))
-plt.hist(udocasig_back, label = label3, histtype='step', bins=50,range=(0,5))
+label3 = "DOCA Variance"
+# label3b = "DOCA Variance Background"
+plt.hist(udocasig_sig, label = "DOCA Variance Signal", bins=50,range=(0,5))
+plt.hist(udocasig_back, label = "DOCA Variance Background", histtype='step', bins=50,range=(0,5))
+plt.xlabel("mm^2")
+plt.ylabel("Number of Hits")
 plt.legend()
-plt.savefig("plots/"+ suffix + label3 + ".pdf") 
+plt.savefig("plots/"+ "TrainBkg" + suffix + label3 + ".pdf") 
 plt.clf()
 
 
 # In[ ]:
 
-label4 = "Time-Over-Threshold Drift Time Signal"
-plt.hist(tottdrift_sig,label = label4, bins=50, range=(0,40))
-plt.hist(tottdrift_back,label = label4, histtype='step', bins=50, range=(0,40))
+label4 = "Time-Over-Threshold Drift Time"
+# label4b = "Time-Over-Threshold Drift Time Background"
+plt.hist(tottdrift_sig,label = "Time-Over-Threshold Drift Time Signal", bins=50, range=(0,40))
+plt.hist(tottdrift_back,label = "Time-Over-Threshold Drift Time Background", histtype='step', bins=50, range=(0,40))
+plt.xlabel("ns")
+plt.ylabel("Number of Hits")
 plt.legend()
-plt.savefig("plots/" + suffix + label4 + ".pdf")
+plt.savefig("plots/" +"TrainBkg" +  suffix + label4 + ".pdf")
 plt.clf()
 
 # In[ ]:
 
-label5 = "WDist - Unbiased U Position Difference Signal"
-plt.hist(du_sig,label = label5, bins=50, range=(0,800))
-plt.hist(du_back,label = label5, histtype='step', bins=50, range=(0,800))
+label5 = "WDist - Unbiased U Position Difference"
+# label5b = "WDist - Unbiased U Position Difference Background"
+plt.hist(du_sig,label = "WDist - Unbiased U Position Difference Signal", bins=50, range=(0,800))
+plt.hist(du_back,label = "WDist - Unbiased U Position Difference Background", histtype='step', bins=50, range=(0,800))
+plt.xlabel("mm")
+plt.ylabel("Number of Hits")
 plt.legend()
-plt.savefig("plots/" + suffix + label5 + ".pdf")
+plt.savefig("plots/" + "TrainBkg" + suffix + label5 + ".pdf")
 plt.clf()
 
 
 # In[ ]:
 
-label6 = "Rho Signal"
-plt.hist(rho_sig, label = label6, bins=50, range=(350,700))
-plt.hist(rho_back, label = label6, histtype='step', bins=50, range=(350,700))
+label6 = "Rho"
+# label6b = "Rho Background"
+plt.hist(rho_sig, label = "Rho Signal", bins=50, range=(350,700))
+plt.hist(rho_back, label = "Rho Background", histtype='step', bins=50, range=(350,700))
+plt.xlabel("mm")
+plt.ylabel("Number of Hits")
 plt.legend()
-plt.savefig("plots/" + suffix + label6 + ".pdf")
+plt.savefig("plots/" + "TrainBkg" + suffix + label6 + ".pdf")
 plt.clf()
 
 
@@ -346,7 +369,7 @@ auc_xgboost = roc_auc_score(y_ce_test, prediction_xgboost)
 
 fig, ax = plt.subplots(1,1)
 ax.plot(tpr_ce,1-fpr_ce,label=f'MLP AUC: {auc_ce:.4f}')
-ax.plot(tpr_xgboost,1-fpr_xgboost,label=f'BDT AUC: {auc_xgboost:.4f}')
+# ax.plot(tpr_xgboost,1-fpr_xgboost,label=f'BDT AUC: {auc_xgboost:.4f}')
 
 ax.legend()
 ax.set_aspect("equal")
@@ -371,9 +394,10 @@ model.save("models/TrainBkg" + suffix + ".h5")
 
 
 # Now we save our model in HDF5 format.  This can be used as input to the SOFIE parser.  Note that the kernel must be restarted when saving this file, as re-running individual cells increments the layer numbers in the hdf5 file, causing the SOFIE parser to fail.  This causes the spurious tensorflow warning about the model not having been built.
-modelFile = "models/TrainBkg" + suffix + ".h5"
-codename = "code/TrainBkg" + suffix + ".hxx";
-output_model = ROOT.TMVA.Experimental.SOFIE.PyKeras.Parse(modelFile)
-output_model.Generate()
-output_model.OutputGenerated(codename)
-# output_model.save("code/TrainBkg"+suffix+".hxx")
+# modelFile = "models/TrainBkg" + suffix + ".h5"
+# codename = "code/TrainBkg" + suffix + ".hxx";
+# output_model = ROOT.TMVA.Experimental.SOFIE.PyKeras.Parse(modelFile)
+# output_model.Generate()
+# output_model.OutputGenerated(codename)
+with open("SOFIEConvert.py") as f:
+    exec(f.read())
