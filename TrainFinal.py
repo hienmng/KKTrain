@@ -9,10 +9,10 @@
 
 
 suffix = "Final"
-treename = "TAKK"
+treename = ["TAKK"]
 file_list = "/global/cfs/cdirs/m3712/Mu2e/TrkAna/65717793/files.txt"
 print("Using files in " + file_list)
 
-with open("TrainBkg_Outdated.py") as f:
+with open("TrainBkg.py") as f:
     exec(f.read())
 
