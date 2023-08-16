@@ -9,7 +9,7 @@
 
 
 suffix = "Final"
-treename = "TAKK"
+treename = ["TAKK"]
 file_list = "/global/cfs/cdirs/m3712/Mu2e/TrkAna/65717793/files.txt"
 print("Using files in " + file_list)
 
